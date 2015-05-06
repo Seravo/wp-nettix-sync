@@ -3,8 +3,8 @@ Contributors: Zuige
 Tags: nettix, sync
 Donate link: http://seravo.fi/
 Requires at least: 4.0
-Tested up to: 4.1
-Stable tag: 0.2 
+Tested up to: 4.2.1
+Stable tag: 1.0
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -30,11 +30,11 @@ No screenshots yet.
 
 == Changelog ==
 
-= 0.1 =
+= 1.0 =
 
 == Upgrade Notice ==
 
-= 0.1 =
+= 1.0 =
 Please upgrade to the newest version. It won't break
 anything. Promise!
 
