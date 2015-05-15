@@ -7,48 +7,28 @@
 
   $meta = json_decode(json_encode((array)$xml),1);
   // save nettix URL in meta fields
+  unset($meta[0]);
   $meta['source'] = $item;
   // get nettix ID
   $meta['nettixID'] = (string)$xml->id;
   // get item title
   $meta['title'] = (string)$xml->make .' '. (string)$xml->model .' '. (string)$xml->year;
-  // get manufacturer
-  /*$meta['Valmistaja'] =(string)$xml->make;
-
-  // get model
-  $meta['Malli'] = (string)$xml->model;
   
-  // get subtitle
-  $meta['Tarkenne'] = (string)$xml->subType;
-
-  // get price
-  $meta['Hinta'] = (string)$xml->price;
-  
-  // get VAT info
-  $meta['ALV'] = "";
-  // get table keys and values
-  
-  // get images
   $images = array();
   
-  foreach( $xml->media->image as $image ) {
-    $images[] = (string)$image->imgUrl;
+  for($x=0;$x<count($meta['media']['image']);$x++){
+    $images[] = $meta['media']['image'][$x]['imgUrl'];
   }
-  
-  $meta['images'] = $images; //array
-  // get technical titles
-  foreach( $xml->techInfo->children() as $element ) {
-    $meta[$element->getName()] = (string)$element;
-  }
-  
-  // get description
-  //$meta['Lisätiedot'] = $xml->description;*/
-  
+  unset($meta['media']['image']);
+  /*foreach( $meta['image'] as $element ) {
+    $images[]=$element['imgUrl'];
+  }*/
+  $meta['images'] = $images;
   return $meta;
 }
 $item = '';
 
-var_dump(_wp_nettix_parse_meta($item));
+print_r(_wp_nettix_parse_meta($item));
 
 
 /*function _wp_nettix_parse_links($directory) {
