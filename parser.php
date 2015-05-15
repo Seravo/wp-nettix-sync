@@ -28,17 +28,17 @@
 }
 $item = '';
 
-print_r(_wp_nettix_parse_meta($item));
+print_r(_wp_nettix_parse_links($item));
 
 
-/*function _wp_nettix_parse_links($directory) {
+function _wp_nettix_parse_links($directory) {
 
-  // get items from directory
-  foreach( $document->find('a.tricky_link') as $item ) {
-    $items[] = $item->href;
-  }
+  $xml = simplexml_load_file($directory);
+  $items = array();
   
-  $document->clear(); // free up memory
+  foreach( $xml->children() as $child){
+      $items[] = $child->adUrl;
+  }
   return $items;
-}*/
+}
 
