@@ -197,7 +197,7 @@ function _wp_nettix_parse_meta($item) {
   $images = array();
   
   for($x=0;$x<count($meta['media']['image']);$x++){
-    $images[] = $meta['media']['image'][$x]['imgUrl'];
+    $images[] = (string)$meta['media']['image'][$x]['imgUrl'];
   }
   unset($meta['media']['image']);
   /*foreach( $meta['image'] as $element ) {
@@ -214,7 +214,7 @@ function _wp_nettix_parse_links($directory) {
   $items = array();
   
   foreach( $xml->children() as $child){
-      $items[] = $child->adUrl;
+      $items[] = (string)$child->adUrl;
   }
   return $items;
 }
@@ -225,7 +225,7 @@ function _wp_nettix_get_links(){
   $items = array();
   
   foreach( $xml->children() as $child){
-    $items[] = $child->adListUrl;
+    $items[] = (string)$child->adListUrl;
   }
   return $items;  
 }
