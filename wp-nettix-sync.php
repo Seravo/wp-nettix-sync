@@ -8,7 +8,6 @@
  * Author URI: http://seravo.fi
  * License: GPLv3
 */
-
 /**
  * Copyright 2015 Antti Kuosmanen / Seravo Oy
  * This program is free software; you can redistribute it and/or modify
@@ -22,8 +21,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
-
-
 /**
  * Create a custom post type for NettiX items
  */
@@ -59,7 +56,6 @@ function _wp_nettix_register_cpt() {
     )
   );
 }
-
 /**
  * Define once 15 mins interval
  */
@@ -68,7 +64,6 @@ function _wp_nettix_new_interval($interval) {
     $interval['*/15'] = array('interval' => 15 * 60, 'display' => 'Once 15 minutes');
     return $interval;
 }
-
 /**
  * Schedule the sync action to be done hourly via WP-Cron
  */
@@ -78,58 +73,43 @@ function _wp_nettix_setup_schedule() {
     wp_schedule_event( time(), '*/15', 'wp_nettix_sync_data');
   }
 }
-
 /**
  * Fetches data from NettiX
  */
 add_action( 'wp_nettix_sync_data', '_wp_nettix_do_data_sync' );
 function _wp_nettix_do_data_sync() {
-
   // start debug buffer
   ob_start();
   
   // give it some time...
   set_time_limit(180);
-
   // this helps with DEBUG
   header('Content-Type: text/html; charset=utf-8');
-
   global $nettix_sources;
+  $nettix_sources = _wp_nettix_get_links();
   if( !is_array($nettix_sources) ) {
     $nettix_sources = array();
   }
-
   // wp-config.php:
-  /*$nettix_sources = array(
-    'http://www.nettiauto.com/yritys/{yrityksen_nimi}?id_template=7',
-  );*/
-
-
+  /*$nettix_sources = 'http://www.nettiauto.com/yritys/{yrityksen_nimi}?id_template=7'*/
   // get item links
   $links = array();
   foreach($nettix_sources as $src) {
     $links = array_merge( $links, _wp_nettix_parse_links( $src ) );
   }
-
   $links = array_unique( $links );
-
   // store available nettiX ids to keep track of published posts
   $available = array();
-
   // keep track of actions
   $added = array();
   $updated = array();
   $deleted = array();
-
   // store the data into wordpress posts
   foreach($links as $count => $link) {
-
     // limit for debug
     $meta = _wp_nettix_parse_meta( $link );
-
     // make this available
     $available[] = $meta['nettixID'];
-
     $post = array(
       'post_content'   => '',
       'post_name'      => sanitize_title( $meta['title'] ),
@@ -137,7 +117,6 @@ function _wp_nettix_do_data_sync() {
       'post_status'    => 'publish',
       'post_type'      => 'nettix',
     );
-
     // check if this already exists as a post
     $matching = get_posts( array(
       'post_type' => 'nettix',
@@ -148,34 +127,24 @@ function _wp_nettix_do_data_sync() {
         )
       )
     ));
-
     if( !empty($matching) ) {
       // post exists, update it
       $updated[] = $post['ID'] = $matching[0]->ID;
     }
-
     else {
       $added[] = $post_id;
     }
-
     $post_id = wp_insert_post( $post );
-
-
     // add submission data as meta values
     foreach($meta as $key => $value) {
-
       // store arrays in JSON
       if(is_array($value))
         $value = json_encode( $value );
-
       // add or update the value
       if( !add_post_meta($post_id, trim( $key ), sanitize_text_field( $value ), true) )
           update_post_meta($post_id, trim( $key ), sanitize_text_field( $value ) );
-
     }
-
   }
-
   // find posts to eliminate
   $eliminate = get_posts( array(
     'posts_per_page' => -1,
@@ -188,32 +157,23 @@ function _wp_nettix_do_data_sync() {
       )
     )
   ));
-
   // eliminate them
   foreach($eliminate as $post) {
     wp_delete_post($post->ID, true);
     $deleted[] = $post->ID;
   }
-
   echo "Added: ";
   print_r($added);
-
   echo "Updated: ";
   print_r($updated);
-
   echo "Deleted: ";
   print_r($deleted);
-
   $output = ob_get_clean();
-
   if(isset($_GET['nettix_do_sync'])) {
     print_r('<pre>' . $output . '</pre>');
     die();
   }
-
 }
-
-
 /**
  * Parses item meta from an item template
  *
@@ -221,138 +181,54 @@ function _wp_nettix_do_data_sync() {
  * We need to port this to their private XML API at http://www.nettiauto.com/datapipe/xml/v2/
 */
 function _wp_nettix_parse_meta($item) {
-
-  // reset timer
+  
   set_time_limit(180);
-
-  // include dom parser lib
-  require_once 'lib/Simple-HTML-DOM/simple_html_dom.php';
-
-  // load the item meta
-  $document = file_get_contents( $item );
-  $document = str_get_html( utf8_encode( $document ) );
-
-
-  $meta = array();
-
+  
+  $xml = simplexml_load_file($item);
+  $meta = json_decode(json_encode((array)$xml),1);
   // save nettix URL in meta fields
+  unset($meta[0]);
   $meta['source'] = $item;
-
   // get nettix ID
-  foreach( $document->find('*[itemprop="productID"]') as $data ) {
-    $meta['nettixID'] = $data->plaintext;
-  }
-
+  $meta['nettixID'] = (string)$xml->id;
   // get item title
-  foreach( $document->find('title') as $data ) {
-    $meta['title'] = $data->plaintext;
-  }
-
-  // get manufacturer
-  foreach( $document->find('*[itemprop="manufacturer"]') as $data ) {
-    $meta['Valmistaja'] = $data->plaintext;
-  }
-
-  // get model
-  foreach( $document->find('*[itemprop="model"]') as $data ) {
-    $meta['Malli'] = $data->plaintext;
-  }
-
-  // get subtitle
-  foreach( $document->find('.vif_cnt_left h2.mb5') as $data ) {
-    $meta['Tarkenne'] = $data->plaintext;
-  }
-
-  // get price
-  foreach( $document->find('*[itemprop="price"]') as $data ) {
-    $meta['Hinta'] = $data->plaintext;
-  }
-
-  // get VAT info
-   foreach( $document->find('.vif_cnt_right span.mt3') as $data ) {
-    $meta['ALV'] = $data->plaintext;
-  }
-
-  // get table keys and values
-  foreach( $document->find('.relative td') as $n => $data ) {
-    if($n % 3 == 0) {
-      // key
-      $key = trim( $data->plaintext );
-    }
-    if($n % 3 == 1) {
-      // value
-      $value = trim( $data->plaintext );
-      $meta[$key] = $value;
-    }
-  }
-
-  // get images
+  $meta['title'] = (string)$xml->make .' '. (string)$xml->model .' '. (string)$xml->year;
+  
   $images = array();
-  foreach( $document->find('.jcarousel-item a') as $data ) {
-    $images[] = $data->href;
+  
+  for($x=0;$x<count($meta['media']['image']);$x++){
+    $images[] = $meta['media']['image'][$x]['imgUrl'];
   }
+  unset($meta['media']['image']);
+  /*foreach( $meta['image'] as $element ) {
+    $images[]=$element['imgUrl'];
+  }*/
   $meta['images'] = $images;
-
-  // get technical titles
-  $technical = $document->find('#acc_section');
-  $technical = $technical[0]->innertext;
-  foreach( $document->find('#acc_section h2') as $data ) {
-    $key = trim( $data->plaintext );
-
-    // value is any text after the h2 tag until the start of next
-    $startpos = strpos($technical, $data->outertext) + strlen($data->outertext);
-    $endpos = strpos($technical, '<h2', $startpos + 1);
-
-    if(!$endpos)
-      $endpos = strlen($technical);
-
-    $value = substr($technical, $startpos, $endpos - $startpos);
-
-    $meta[$key] = $value;
-  }
-
-  // get description
-  foreach( $document->find('*[itemprop="description"] p') as $data ) {
-
-    if(!$length = strpos($data->innertext, '<a href="javascript')) {
-      //there may be a read less link in the end
-      $length = strlen($data->innertext);
-    }
-
-    $meta['Lisätiedot'] = substr($data->innertext, 0, $length);
-  }
-
-  $document->clear(); // free up memory
-
   return $meta;
-
 }
-
-
 /**
  * Parses item links from a template 7 directory
  */
 function _wp_nettix_parse_links($directory) {
-
-  // include dom parser lib
-  require_once 'lib/Simple-HTML-DOM/simple_html_dom.php';
-
-  // load the directory page
-  $document = file_get_contents( $directory );
-  $document = str_get_html( utf8_encode( $document ) );
-
-  // get items from directory
+  $xml = simplexml_load_file($directory);
   $items = array();
-  foreach( $document->find('a.tricky_link') as $item ) {
-    $items[] = $item->href;
-  }
   
-  $document->clear(); // free up memory
-
+  foreach( $xml->children() as $child){
+      $items[] = $child->adUrl;
+  }
   return $items;
-
 }
 
+function _wp_nettix_get_links(){ 
+  $nettix_url = '';
+  $xml = simplexml_load_file($nettix_url);
+  $items = array();
+  
+  foreach( $xml->children() as $child){
+    $items[] = $child->adListUrl;
+  }
+  return $items;  
+}
 
 /**
  * Run sync via GET parameters
