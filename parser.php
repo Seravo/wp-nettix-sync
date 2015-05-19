@@ -1,6 +1,6 @@
 <?php
 
-  function _wp_nettix_parse_meta($item) { 
+function _wp_nettix_parse_meta($item) { 
   set_time_limit(180);
   
   $xml = simplexml_load_file($item);
@@ -26,13 +26,26 @@
   $meta['images'] = $images;
   return $meta;
 }
-$item = '';
 
-print_r(_wp_nettix_parse_links($item));
+/**
+ * Fetch the dealer list
+ */
+function _wp_nettix_get_links(){ 
+  $nettix_url = '';
+  $xml = simplexml_load_file($nettix_url);
+  $items = array();
+  
+  foreach( $xml->children() as $child){
+    $items[] = $child->adListUrl;
+  }
+  return $items;  
+}
 
+/**
+ *  Parse links for each individual ad
+ */
 
 function _wp_nettix_parse_links($directory) {
-
   $xml = simplexml_load_file($directory);
   $items = array();
   
@@ -40,5 +53,16 @@ function _wp_nettix_parse_links($directory) {
       $items[] = $child->adUrl;
   }
   return $items;
+}
+
+$dealers = _wp_nettix_get_links();
+foreach( $dealers as $link ){
+  $links = _wp_nettix_parse_links($link);
+  foreach($links as $ad){
+    
+    print_r(_wp_nettix_parse_meta($ad));
+    
+  }
+  
 }
 
