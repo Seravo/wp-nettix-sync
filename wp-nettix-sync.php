@@ -138,14 +138,19 @@ function _wp_nettix_do_data_sync() {
     }
     $post_id = wp_insert_post( $post );
     // add submission data as meta values
-    foreach($meta as $key => $value) {
+    /*foreach($meta as $key => $value) {
       // store arrays in JSON
       if(is_array($value))
       //$value = json_encode( $value );
       //add or update the value
       if( !add_post_meta($post_id, trim( $key ), sanitize_text_field($value), true) )
           update_post_meta($post_id, trim( $key ), sanitize_text_field($value), true );
-    }
+    }*/
+      $meta = wp_slash(json_encode($meta));
+  
+      if( !add_post_meta($post_id, 'xml', $meta, true) )
+          update_post_meta($post_id, 'xml', $meta, true );
+  
   }
   // find posts to eliminate
   $eliminate = get_posts( array(
