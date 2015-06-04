@@ -109,7 +109,7 @@ function _wp_nettix_do_data_sync() {
     // limit for debug
     $meta = _wp_nettix_parse_meta( $link );
     
-    error_log(var_dump($meta,true),0);
+    //error_log(var_dump($meta,true),0);
     // make this available
     $available[] = $meta['nettixID'];
     $post = array(
@@ -191,6 +191,12 @@ function _wp_nettix_parse_meta($item) {
   //$meta = json_decode(json_encode((array)$xml),1);
   // save nettix URL in meta fields
   //unset($meta[0]);
+
+  $temp = array();
+  $temp = $meta['ad'];
+  unset($meta['ad']);
+  $meta = array_merge($meta,$temp);
+  
   $meta['source'] = $item;
   // get nettix ID
   $meta['nettixID'] = (string)$xml->id;
@@ -207,11 +213,7 @@ function _wp_nettix_parse_meta($item) {
   }*/
   $meta['images'] = $images;
   
-  $temp = array();
-  $temp = $meta['ad'];
-  unset($meta['ad']);
-  $meta = array_merge($meta,$temp);
-  
+  error_log(var_dump($meta));
   return $meta;
 }
 /**
@@ -226,9 +228,8 @@ function _wp_nettix_parse_links($directory) {
   }
   return $items;
 }
-
 function _wp_nettix_get_links(){ 
-  $nettix_url = '';
+  $nettix_url = NETTIX_DEALERLIST; //set in wp-config
   $xml = simplexml_load_file($nettix_url);
   $items = array();
   
@@ -237,7 +238,6 @@ function _wp_nettix_get_links(){
   }
   return $items;  
 }
-
 function xmlToArray($xml, $options = array()) {
     $defaults = array(
         'namespaceSeparator' => ':',//you may want this to be something other than a colon
@@ -314,8 +314,6 @@ function xmlToArray($xml, $options = array()) {
         $xml->getName() => $propertiesArray
     );
 }
-
-
 /**
  * Run sync via GET parameters
  */
