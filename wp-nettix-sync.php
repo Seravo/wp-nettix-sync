@@ -106,10 +106,8 @@ function _wp_nettix_do_data_sync() {
   $deleted = array();
   // store the data into wordpress posts
   foreach($links as $count => $link) {
-    // limit for debug
     $meta = _wp_nettix_parse_meta( $link );
-    
-    error_log(var_dump($meta,true),0);
+
     // make this available
     $available[] = $meta['nettixID'];
     $post = array(
@@ -138,14 +136,22 @@ function _wp_nettix_do_data_sync() {
     }
     $post_id = wp_insert_post( $post );
     // add submission data as meta values
-    foreach($meta as $key => $value) {
+    /*foreach($meta as $key => $value) {
       // store arrays in JSON
       if(is_array($value))
       //$value = json_encode( $value );
       //add or update the value
       if( !add_post_meta($post_id, trim( $key ), sanitize_text_field($value), true) )
           update_post_meta($post_id, trim( $key ), sanitize_text_field($value), true );
-    }
+    }*/
+      if( !add_post_meta($post_id, 'nettixID', $meta['nettixID'], true) ){
+          update_post_meta($post_id, 'nettixID', $meta['nettixID'], true );
+      }
+      
+      $meta = wp_slash(json_encode($meta));
+      if( !add_post_meta($post_id, 'xml', $meta, true) ){
+          update_post_meta($post_id, 'xml', $meta, true );
+      }
   }
   // find posts to eliminate
   $eliminate = get_posts( array(
@@ -177,11 +183,10 @@ function _wp_nettix_do_data_sync() {
   }
 }
 /**
- * Parses item meta from an item template
+ * Parses item meta from xml
  *
- * @TODO Shameless crawl mining...
- * We need to port this to their private XML API at http://www.nettiauto.com/datapipe/xml/v2/
-*/
+ * 
+ */
 function _wp_nettix_parse_meta($item) {
   
   set_time_limit(180);
@@ -191,27 +196,29 @@ function _wp_nettix_parse_meta($item) {
   //$meta = json_decode(json_encode((array)$xml),1);
   // save nettix URL in meta fields
   //unset($meta[0]);
-  $meta['source'] = $item;
-  // get nettix ID
-  $meta['nettixID'] = (string)$xml->id;
-  // get item title
-  $meta['title'] = (string)$xml->make .' '. (string)$xml->model .' '. (string)$xml->year;
-  
-  $images = array();
-  for($x=0;$x<count($meta['media']['image']);$x++){
-    $images[] = $meta['media']['image'][$x]['imgUrl'];
-  }
-  unset($meta['media']['image']);
-  /*foreach( $meta['image'] as $element ) {
-    $images[]=$element['imgUrl'];
-  }*/
-  $meta['images'] = $images;
-  
+
   $temp = array();
   $temp = $meta['ad'];
   unset($meta['ad']);
   $meta = array_merge($meta,$temp);
   
+  $meta['source'] = $item;
+  // get nettix ID
+  $meta['nettixID'] = (string)$xml->id;
+  // get item title
+  $meta['title'] = (string)$xml->make .' '. (string)$xml->model .' '. (string)$xml->year . ' ' . (string)$xml->engineModel;
+  
+  $images = array();
+  for($x=0;$x<count($meta['media']['image']);$x++){
+    $images[] = $meta['media']['image'][$x]['imgUrl'];
+  }
+  unset($meta['media']);
+  /*foreach( $meta['image'] as $element ) {
+    $images[]=$element['imgUrl'];
+  }*/
+  $meta['images'] = $images;
+  
+  error_log(var_dump($meta,true),0);
   return $meta;
 }
 /**
@@ -226,9 +233,8 @@ function _wp_nettix_parse_links($directory) {
   }
   return $items;
 }
-
 function _wp_nettix_get_links(){ 
-  $nettix_url = '';
+  $nettix_url = NETTIX_DEALERLIST; //set in wp-config
   $xml = simplexml_load_file($nettix_url);
   $items = array();
   
@@ -237,7 +243,6 @@ function _wp_nettix_get_links(){
   }
   return $items;  
 }
-
 function xmlToArray($xml, $options = array()) {
     $defaults = array(
         'namespaceSeparator' => ':',//you may want this to be something other than a colon
@@ -314,8 +319,6 @@ function xmlToArray($xml, $options = array()) {
         $xml->getName() => $propertiesArray
     );
 }
-
-
 /**
  * Run sync via GET parameters
  */
