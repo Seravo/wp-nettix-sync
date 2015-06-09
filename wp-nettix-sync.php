@@ -167,7 +167,7 @@ function _wp_nettix_do_data_sync() {
             update_post_meta($post_id, $entry, $meta['locationInfo']['town'], true );
           }
         }
-        elseif( empty( $meta[$key] ) ){}
+        if( empty( $meta[$key] ) ){}
         
         else{
           if( !add_post_meta( $post_id, $entry, $meta[$key], true ) ){
