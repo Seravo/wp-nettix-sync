@@ -144,9 +144,42 @@ function _wp_nettix_do_data_sync() {
       if( !add_post_meta($post_id, trim( $key ), sanitize_text_field($value), true) )
           update_post_meta($post_id, trim( $key ), sanitize_text_field($value), true );
     }*/
+
+      //search doesn't work w/o some meta fields
+      //this is not the best solution though
+      
+      $meta_keys = array(
+      'make' => 'Valmistaja',
+      'location' => 'Sijainti',
+      'driveType' => 'Vetotapa',
+      'gearBoxType' => 'Vaihteisto',
+      'engineModel' => 'Moottori',
+      'isVatDeductible' => 'ALV',
+      //'Kunnossapitosopimus',
+      'price' => 'Hinta',
+      'year' => 'Vuosimalli',
+      'mileage' => 'Mittarilukema',
+      );
+
+      foreach( $meta_keys as $key => $entry ){
+        if($key == 'location'){
+          if( !add_post_meta($post_id, $entry, $meta['locationInfo']['town'], true) ){
+            update_post_meta($post_id, $entry, $meta['locationInfo']['town'], true );
+          }
+        }
+        elseif( empty( $meta[$key] ) ){}
+        
+        else{
+          if( !add_post_meta( $post_id, $entry, $meta[$key], true ) ){
+          update_post_meta( $post_id, $entry, $meta[$key], true );
+          }
+        }
+      }
+      
+      
       if( !add_post_meta($post_id, 'nettixID', $meta['nettixID'], true) ){
           update_post_meta($post_id, 'nettixID', $meta['nettixID'], true );
-      }
+        }
       
       $meta = wp_slash(json_encode($meta));
       if( !add_post_meta($post_id, 'xml', $meta, true) ){
