@@ -163,22 +163,22 @@ function _wp_nettix_do_data_sync() {
 
       foreach( $meta_keys as $key => $entry ){
         if($key == 'location'){
-          if( !add_post_meta($post_id, $entry, $meta['locationInfo']['town'], true) ){
-            update_post_meta($post_id, $entry, $meta['locationInfo']['town'], true );
+          if( !add_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']), true) ){
+            update_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']), true );
           }
         }
-        if( empty( $meta[$key] ) ){}
+        if( $meta[$key] == false ){}
         
         else{
-          if( !add_post_meta( $post_id, $entry, $meta[$key], true ) ){
-          update_post_meta( $post_id, $entry, $meta[$key], true );
+          if( !add_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true ) ){
+          update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true );
           }
         }
       }
       
       
-      if( !add_post_meta($post_id, 'nettixID', $meta['nettixID'], true) ){
-          update_post_meta($post_id, 'nettixID', $meta['nettixID'], true );
+      if( !add_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']), true) ){
+          update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']), true );
         }
       
       $meta = wp_slash(json_encode($meta));
