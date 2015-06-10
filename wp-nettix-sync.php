@@ -153,7 +153,7 @@ function _wp_nettix_do_data_sync() {
       'location' => 'Sijainti',
       'driveType' => 'Vetotapa',
       'gearBoxType' => 'Vaihteisto',
-      'engineModel' => 'Moottori',
+      'fuelType' => 'Moottori',
       'isVatDeductible' => 'ALV',
       //'Kunnossapitosopimus',
       'price' => 'Hinta',
