@@ -153,7 +153,7 @@ function _wp_nettix_do_data_sync() {
       'location' => 'Sijainti',
       'driveType' => 'Vetotapa',
       'gearBoxType' => 'Vaihteisto',
-      'engineModel' => 'Moottori',
+      'fuelType' => 'Moottori',
       'isVatDeductible' => 'ALV',
       //'Kunnossapitosopimus',
       'price' => 'Hinta',
@@ -167,11 +167,16 @@ function _wp_nettix_do_data_sync() {
             update_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']), true );
           }
         }
-        if( $meta[$key] == false ){}
+        
+        elseif( $meta[$key] == false ){
+          if( !add_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty'), true ) ){
+            update_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty'), true );
+            }
+        }
         
         else{
           if( !add_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true ) ){
-          update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true );
+            update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true );
           }
         }
       }
