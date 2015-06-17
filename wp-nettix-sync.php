@@ -248,7 +248,9 @@ function _wp_nettix_parse_meta($item) {
   
   $images = array();
   for($x=0;$x<count($meta['media']['image']);$x++){
-    $images[] = $meta['media']['image'][$x]['imgUrl'];
+    if(isset($meta['media']['image'][$x]['imgUrl'])){
+      $images[] = $meta['media']['image'][$x]['imgUrl'];
+    }
   }
   unset($meta['media']);
   /*foreach( $meta['image'] as $element ) {
@@ -256,7 +258,7 @@ function _wp_nettix_parse_meta($item) {
   }*/
   $meta['images'] = $images;
   
-  error_log(var_dump($meta,true),0);
+  //error_log(var_dump($meta,true),0);
   return $meta;
 }
 /**
