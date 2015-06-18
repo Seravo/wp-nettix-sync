@@ -234,7 +234,7 @@ function _wp_nettix_parse_meta($item) {
   //$meta = json_decode(json_encode((array)$xml),1);
   // save nettix URL in meta fields
   //unset($meta[0]);
-
+  
   $temp = array();
   $temp = $meta['ad'];
   unset($meta['ad']);
@@ -247,18 +247,39 @@ function _wp_nettix_parse_meta($item) {
   $meta['title'] = (string)$xml->make .' '. (string)$xml->model .' '. (string)$xml->year . ' ' . (string)$xml->engineModel;
   
   $images = array();
-  for($x=0;$x<count($meta['media']['image']);$x++){
-    if(isset($meta['media']['image'][$x]['imgUrl'])){
-      $images[] = $meta['media']['image'][$x]['imgUrl'];
+  
+  //if theres more than one image
+  //the array structure is different
+  if(isset($meta['media']['image'][0])){
+    for($x=0;$x<count($meta['media']['image']);$x++){
+      if(isset($meta['media']['image'][$x]['imgUrl'])){
+        $images[] = $meta['media']['image'][$x]['imgUrl'];
+      }
+    
     }
   }
+  else{
+    if(isset($meta['media']['image']['imgUrl'])){
+      $images[] = $meta['media']['image']['imgUrl'];
+    }
+  }
+  
+  /*$x = 0;
+  while($x<count($meta['media']['image'])){
+    if(isset($meta['media']['image'][$x]['imgUrl']))
+      $images[] = $meta['media']['image'][$x]['imgUrl'];
+    
+    $x++;
+  }*/
+
   unset($meta['media']);
   /*foreach( $meta['image'] as $element ) {
     $images[]=$element['imgUrl'];
   }*/
   $meta['images'] = $images;
   
-  //error_log(var_dump($meta,true),0);
+  //error_log(var_dump($meta['images'],true),0);
+  
   return $meta;
 }
 /**
