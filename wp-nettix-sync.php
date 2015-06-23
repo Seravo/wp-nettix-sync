@@ -188,7 +188,7 @@ function _wp_nettix_do_data_sync() {
           update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']), true );
         }
       
-      $meta = wp_slash(json_encode($meta));
+      $meta = json_encode($meta);
       if( !add_post_meta($post_id, 'xml', $meta, true) ){
           update_post_meta($post_id, 'xml', $meta, true );
       }
@@ -268,10 +268,6 @@ function _wp_nettix_parse_meta($item) {
       $images[] = $meta['media']['image']['imgUrl'];
     }
   }
-
-  if(empty($images)) {
-    $images[] = NETTIX_PLACEHOLDER_IMG;
-  }
   
   /*$x = 0;
   while($x<count($meta['media']['image'])){
@@ -286,6 +282,11 @@ function _wp_nettix_parse_meta($item) {
     $images[]=$element['imgUrl'];
   }*/
   $meta['images'] = $images;
+
+  if(empty($meta['images'])) {
+    $meta['images'] = array();
+    $meta['images'][] = NETTIX_PLACEHOLDER_IMG;
+  }
   
   //error_log(var_dump($meta['images'],true),0);
   
