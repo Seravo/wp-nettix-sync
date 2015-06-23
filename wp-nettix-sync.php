@@ -263,6 +263,10 @@ function _wp_nettix_parse_meta($item) {
       $images[] = $meta['media']['image']['imgUrl'];
     }
   }
+
+  if(empty($images)) {
+    $images[] = NETTIX_PLACEHOLDER_IMG;
+  }
   
   /*$x = 0;
   while($x<count($meta['media']['image'])){
