@@ -108,6 +108,8 @@ function _wp_nettix_do_data_sync() {
   foreach($links as $count => $link) {
     $meta = _wp_nettix_parse_meta( $link );
 
+    if(!$meta) continue; //skip if meta not available
+
     // make this available
     $available[] = $meta['nettixID'];
     $post = array(
@@ -230,6 +232,9 @@ function _wp_nettix_parse_meta($item) {
   set_time_limit(180);
   
   $xml = simplexml_load_file($item);
+
+  if(!$xml) return false; // do nothing if there's a failure 
+
   $meta = xmlToArray($xml);
   //$meta = json_decode(json_encode((array)$xml),1);
   // save nettix URL in meta fields
