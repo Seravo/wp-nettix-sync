@@ -165,33 +165,22 @@ function _wp_nettix_do_data_sync() {
 
       foreach( $meta_keys as $key => $entry ){
         if($key == 'location'){
-          if( !add_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']), true) ){
-            update_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']), true );
-          }
+          update_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']), true );
         }
         
         elseif( $meta[$key] == false ){
-          if( !add_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty'), true ) ){
-            update_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty'), true );
-            }
+          update_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty'), true );
         }
         
         else{
-          if( !add_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true ) ){
-            update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true );
-          }
+          update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true );
         }
       }
       
+      update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']), true );
       
-      if( !add_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']), true) ){
-          update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']), true );
-        }
-      
-      $meta = json_encode($meta);
-      if( !add_post_meta($post_id, 'xml', $meta, true) ){
-          update_post_meta($post_id, 'xml', $meta, true );
-      }
+      $meta = wp_slash(json_encode($meta));
+      update_post_meta($post_id, 'xml', $meta, true );
   }
   // find posts to eliminate
   $eliminate = get_posts( array(
