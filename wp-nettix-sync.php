@@ -80,7 +80,7 @@ add_action( 'wp_nettix_sync_data', '_wp_nettix_do_data_sync' );
 function _wp_nettix_do_data_sync() {
   // start debug buffer
   ob_start();
-  
+
   // give it some time...
   set_time_limit(180);
   // this helps with DEBUG
@@ -97,7 +97,10 @@ function _wp_nettix_do_data_sync() {
   foreach($nettix_sources as $src) {
     $links = array_merge( $links, _wp_nettix_parse_links( $src ) );
   }
-  $links = array_unique( $links );
+
+  // HACK: let's shuffle the order of links in order to avoid missing the same ones every time
+  shuffle($links);
+
   // store available nettiX ids to keep track of published posts
   $available = array();
   // keep track of actions
@@ -106,6 +109,7 @@ function _wp_nettix_do_data_sync() {
   $deleted = array();
   // store the data into wordpress posts
   foreach($links as $count => $link) {
+
     $meta = _wp_nettix_parse_meta( $link );
 
     if(!$meta) continue; //skip if meta not available
@@ -149,7 +153,7 @@ function _wp_nettix_do_data_sync() {
 
       //search doesn't work w/o some meta fields
       //this is not the best solution though
-      
+
       $meta_keys = array(
       'make' => 'Valmistaja',
       'location' => 'Sijainti',
@@ -165,22 +169,25 @@ function _wp_nettix_do_data_sync() {
 
       foreach( $meta_keys as $key => $entry ){
         if($key == 'location'){
-          update_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']), true );
+          update_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']) );
         }
-        
+
         elseif( $meta[$key] == false ){
-          update_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty'), true );
+          update_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty') );
         }
-        
+
         else{
-          update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]), true );
+          update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]) );
         }
       }
-      
-      update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']), true );
-      
+
+      update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']) );
+
+      if($meta['nettixID'] == '7451763') {
+        error_log(print_r($meta, true), 0);
+      }
       $meta = wp_slash(json_encode($meta));
-      update_post_meta($post_id, 'xml', $meta, true );
+      update_post_meta($post_id, 'xml', $meta );
   }
   // find posts to eliminate
   $eliminate = get_posts( array(
@@ -214,34 +221,34 @@ function _wp_nettix_do_data_sync() {
 /**
  * Parses item meta from xml
  *
- * 
+ *
  */
 function _wp_nettix_parse_meta($item) {
-  
+
   set_time_limit(180);
-  
+
   $xml = simplexml_load_file($item);
 
-  if(!$xml) return false; // do nothing if there's a failure 
+  if(!$xml) return false; // do nothing if there's a failure
 
   $meta = xmlToArray($xml);
   //$meta = json_decode(json_encode((array)$xml),1);
   // save nettix URL in meta fields
   //unset($meta[0]);
-  
+
   $temp = array();
   $temp = $meta['ad'];
   unset($meta['ad']);
   $meta = array_merge($meta,$temp);
-  
+
   $meta['source'] = $item;
   // get nettix ID
   $meta['nettixID'] = (string)$xml->id;
   // get item title
   $meta['title'] = (string)$xml->make .' '. (string)$xml->model .' '. (string)$xml->year . ' ' . (string)$xml->engineModel;
-  
+
   $images = array();
-  
+
   //if theres more than one image
   //the array structure is different
   if(isset($meta['media']['image'][0])){
@@ -249,7 +256,7 @@ function _wp_nettix_parse_meta($item) {
       if(isset($meta['media']['image'][$x]['imgUrl'])){
         $images[] = $meta['media']['image'][$x]['imgUrl'];
       }
-    
+
     }
   }
   else{
@@ -257,12 +264,12 @@ function _wp_nettix_parse_meta($item) {
       $images[] = $meta['media']['image']['imgUrl'];
     }
   }
-  
+
   /*$x = 0;
   while($x<count($meta['media']['image'])){
     if(isset($meta['media']['image'][$x]['imgUrl']))
       $images[] = $meta['media']['image'][$x]['imgUrl'];
-    
+
     $x++;
   }*/
 
@@ -276,9 +283,13 @@ function _wp_nettix_parse_meta($item) {
     $meta['images'] = array();
     $meta['images'][] = NETTIX_PLACEHOLDER_IMG;
   }
-  
-  //error_log(var_dump($meta['images'],true),0);
-  
+
+  error_log($xml->make);
+  if($xml->id == '7451763') {
+    error_log('DEBUG',0);
+    error_log(print_r($meta['images'],true),0);
+  }
+
   return $meta;
 }
 /**
@@ -287,21 +298,26 @@ function _wp_nettix_parse_meta($item) {
 function _wp_nettix_parse_links($directory) {
   $xml = simplexml_load_file($directory);
   $items = array();
-  
+
   foreach( $xml->children() as $child){
-      $items[] = (string)$child->adUrl;
+    $items[] = (string)$child->adUrl;
   }
   return $items;
 }
-function _wp_nettix_get_links(){ 
-  $nettix_url = NETTIX_DEALERLIST; //set in wp-config
-  $xml = simplexml_load_file($nettix_url);
-  $items = array();
-  
-  foreach( $xml->children() as $child){
-    $items[] = (string)$child->adListUrl;
+function _wp_nettix_get_links(){
+  if( defined('NETTIX_DEALERLIST') ) {
+    $nettix_url = NETTIX_DEALERLIST; //set in wp-config
+    $xml = simplexml_load_file($nettix_url);
+    $items = array();
+
+    foreach( $xml->children() as $child){
+      $items[] = (string)$child->adListUrl;
+    }
   }
-  return $items;  
+  else if( defined('NETTIX_ADLIST') ) {
+    return array( NETTIX_ADLIST );
+  }
+  return $items;
 }
 function xmlToArray($xml, $options = array()) {
     $defaults = array(
@@ -317,7 +333,7 @@ function xmlToArray($xml, $options = array()) {
     $options = array_merge($defaults, $options);
     $namespaces = $xml->getDocNamespaces();
     $namespaces[''] = null; //add base (empty) namespace
- 
+
     //get attributes from all namespaces
     $attributesArray = array();
     foreach ($namespaces as $prefix => $namespace) {
@@ -331,7 +347,7 @@ function xmlToArray($xml, $options = array()) {
             $attributesArray[$attributeKey] = (string)$attribute;
         }
     }
- 
+
     //get child nodes from all namespaces
     $tagsArray = array();
     foreach ($namespaces as $prefix => $namespace) {
@@ -339,13 +355,13 @@ function xmlToArray($xml, $options = array()) {
             //recurse into child nodes
             $childArray = xmlToArray($childXml, $options);
             list($childTagName, $childProperties) = each($childArray);
- 
+
             //replace characters in tag name
             if ($options['keySearch']) $childTagName =
                     str_replace($options['keySearch'], $options['keyReplace'], $childTagName);
             //add namespace prefix, if any
             if ($prefix) $childTagName = $prefix . $options['namespaceSeparator'] . $childTagName;
- 
+
             if (!isset($tagsArray[$childTagName])) {
                 //only entry with this key
                 //test if tags of this type should always be arrays, no matter the element count
@@ -364,16 +380,16 @@ function xmlToArray($xml, $options = array()) {
             }
         }
     }
- 
+
     //get text content of node
     $textContentArray = array();
     $plainText = trim((string)$xml);
     if ($plainText !== '') $textContentArray[$options['textContent']] = $plainText;
- 
+
     //stick it all together
     $propertiesArray = !$options['autoText'] || $attributesArray || $tagsArray || ($plainText === '')
             ? array_merge($attributesArray, $tagsArray, $textContentArray) : $plainText;
- 
+
     //return node as array
     return array(
         $xml->getName() => $propertiesArray
