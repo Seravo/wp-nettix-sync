@@ -159,6 +159,13 @@ function _wp_nettix_do_data_sync() {
       'price' => 'Hinta',
       'year' => 'Vuosimalli',
       'mileage' => 'Mittarilukema',
+      'color' => 'Väri',
+      'lengthMeter' => 'Pituus',
+      'widthMeter' => 'Leveys',
+      'heightMeter' => 'Korkeus',
+      'totalOwner' => 'Omistajat',
+      'accessory' => 'Lisävarusteet',
+      'engineInfo' => 'Moottorin tiedot',
       );
 
       foreach( $meta_keys as $key => $entry ){
@@ -240,11 +247,10 @@ function _wp_nettix_parse_meta($item) {
   //if theres more than one image
   //the array structure is different
   if(isset($meta['media']['image'][0])){
-    for($x=0;$x<count($meta['media']['image']);$x++){
-      if(isset($meta['media']['image'][$x]['imgUrl'])){
-        $images[] = $meta['media']['image'][$x]['imgUrl'];
+    foreach($meta['media']['image'] as $image){
+      if(isset($image['imgUrl'])){
+        $images[] = $image['imgUrl'];
       }
-
     }
   }
   else{
@@ -277,7 +283,16 @@ function _wp_nettix_parse_links($directory) {
   return $items;
 }
 function _wp_nettix_get_links(){
+
+ /* Set NETTIX_DEALERLIST or NETTIX_ADLIST in wp-config
+  * Examples:
+  * define(NETTIX_DEALERLIST, 'https://www.nettiauto.com/datapipe/xml/v3/getdealerlist/00');
+  * or
+  * define('NETTIX_ADLIST', serialize(['https://www.nettiauto.com/datapipe/xml/v2/getadlist/00/000000', 'https://www.nettivene.com/datapipe/xml/v2/getadlist/00/000000']));
+  */
+
   if( defined('NETTIX_DEALERLIST') ) {
+
     $nettix_url = NETTIX_DEALERLIST; //set in wp-config
     $xml = simplexml_load_file($nettix_url);
     $items = array();
@@ -287,7 +302,7 @@ function _wp_nettix_get_links(){
     }
   }
   else if( defined('NETTIX_ADLIST') ) {
-    return array( NETTIX_ADLIST );
+    return unserialize( NETTIX_ADLIST );
   }
   return $items;
 }
@@ -373,4 +388,3 @@ function xmlToArray($xml, $options = array()) {
 if(isset($_GET['nettix_do_sync'])) {
   add_action('init', '_wp_nettix_do_data_sync');
 }
-
