@@ -177,9 +177,6 @@ function _wp_nettix_do_data_sync() {
 
       update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']) );
 
-      if($meta['nettixID'] == '7451763') {
-        error_log(print_r($meta, true), 0);
-      }
       $meta = wp_slash(json_encode($meta));
       update_post_meta($post_id, 'xml', $meta );
   }
@@ -226,9 +223,6 @@ function _wp_nettix_parse_meta($item) {
   if(!$xml) return false; // do nothing if there's a failure
 
   $meta = xmlToArray($xml);
-  //$meta = json_decode(json_encode((array)$xml),1);
-  // save nettix URL in meta fields
-  //unset($meta[0]);
 
   $temp = array();
   $temp = $meta['ad'];
@@ -259,18 +253,7 @@ function _wp_nettix_parse_meta($item) {
     }
   }
 
-  /*$x = 0;
-  while($x<count($meta['media']['image'])){
-    if(isset($meta['media']['image'][$x]['imgUrl']))
-      $images[] = $meta['media']['image'][$x]['imgUrl'];
-
-    $x++;
-  }*/
-
   unset($meta['media']);
-  /*foreach( $meta['image'] as $element ) {
-    $images[]=$element['imgUrl'];
-  }*/
   $meta['images'] = $images;
 
   if(empty($meta['images'])) {
@@ -278,15 +261,10 @@ function _wp_nettix_parse_meta($item) {
     $meta['images'][] = NETTIX_PLACEHOLDER_IMG;
   }
 
-  error_log($xml->make);
-  if($xml->id == '7451763') {
-    error_log('DEBUG',0);
-    error_log(print_r($meta['images'],true),0);
-  }
-
   return $meta;
 }
-/**
+
+/*
  * Parses item links from a template 7 directory
  */
 function _wp_nettix_parse_links($directory) {
