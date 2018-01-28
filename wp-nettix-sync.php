@@ -56,21 +56,15 @@ function _wp_nettix_register_cpt() {
     )
   );
 }
-/**
- * Define once 15 mins interval
- */
-add_filter('cron_schedules', '_wp_nettix_new_interval');
-function _wp_nettix_new_interval($interval) {
-    $interval['*/15'] = array('interval' => 15 * 60, 'display' => 'Once 15 minutes');
-    return $interval;
-}
+
+
 /**
  * Schedule the sync action to be done hourly via WP-Cron
  */
 add_action( 'wp', '_wp_nettix_setup_schedule' );
 function _wp_nettix_setup_schedule() {
   if ( ! wp_next_scheduled( 'wp_nettix_sync_data' ) ) {
-    wp_schedule_event( time(), '*/15', 'wp_nettix_sync_data');
+    wp_schedule_event( time(), 'hourly', 'wp_nettix_sync_data');
   }
 }
 /**
