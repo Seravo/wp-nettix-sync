@@ -30,17 +30,17 @@ function _wp_nettix_register_cpt() {
   register_post_type( 'nettix',
     array(
       'labels' => array(
-        'name'               => 'NettiX',
-        'singular_name'      => 'NettiX',
-        'menu_name'          => 'NettiX',
-        'name_admin_bar'     => 'NettiX',
+        'name'               => 'Vaihtoautot',
+        'singular_name'      => 'Vaihtoauto',
+        'menu_name'          => 'Vaihtoautot',
+        'name_admin_bar'     => 'Vaihtoautot',
         'add_new'            => 'Lisää uusi',
-        'add_new_item'       => 'Lisää uusi NettiX',
-        'new_item'           => 'Uusi NettiX',
-        'edit_item'          => 'Muokkaa NettiX',
-        'view_item'          => 'Näytä NettiX',
-        'all_items'          => 'Kaikki NettiX',
-        'search_items'       => 'Etsi NettiX',
+        'add_new_item'       => 'Lisää uusi Vaihtoauto',
+        'new_item'           => 'Uusi Vaihtoauto',
+        'edit_item'          => 'Muokkaa Vaihtoautoa',
+        'view_item'          => 'Näytä Vaihtoauto',
+        'all_items'          => 'Kaikki Vaihtoautot',
+        'search_items'       => 'Etsi Vaihtoautoja',
         'not_found'          => 'Kohdetta ei löytynyt.',
         'not_found_in_trash' => 'Roskakorissa ei ole tuotteita',
       ),
@@ -48,6 +48,36 @@ function _wp_nettix_register_cpt() {
       'has_archive' => true,
       'menu_position' => 5,
       'rewrite' => array( 'slug' => 'vaihtoautot' ),
+      'supports' => array(
+        'title',
+        'editor',
+        'thumbnail',
+        'custom-fields',
+      ),
+    )
+  );
+
+  register_post_type( 'nettixvene',
+    array(
+      'labels' => array(
+        'name'               => 'Vaihtoveneet',
+        'singular_name'      => 'Vaihtovene',
+        'menu_name'          => 'Vaihtoveneet',
+        'name_admin_bar'     => 'Vaihtoveneet',
+        'add_new'            => 'Lisää uusi',
+        'add_new_item'       => 'Lisää uusi Vaihtovene',
+        'new_item'           => 'Uusi Vaihtovene',
+        'edit_item'          => 'Muokkaa Vaihtovenettä',
+        'view_item'          => 'Näytä Vaihtovene',
+        'all_items'          => 'Kaikki Vaihtoveneet',
+        'search_items'       => 'Etsi Vaihtoveneitä',
+        'not_found'          => 'Kohdetta ei löytynyt.',
+        'not_found_in_trash' => 'Roskakorissa ei ole tuotteita',
+      ),
+      'public' => true,
+      'has_archive' => true,
+      'menu_position' => 5,
+      'rewrite' => array( 'slug' => 'vaihtoveneet' ),
       'supports' => array(
         'title',
         'editor',
@@ -105,6 +135,9 @@ function _wp_nettix_do_data_sync() {
   // store the data into wordpress posts
   foreach($links as $count => $link) {
 
+    // Check if 'nettiauto' exists in link and assign the post_type accordingly
+    $post_type = ( false !== strpos($link, 'nettiauto') ) ? 'nettix' : 'nettixvene';
+
     $meta = _wp_nettix_parse_meta( $link );
 
     if(!$meta) continue; //skip if meta not available
@@ -116,11 +149,11 @@ function _wp_nettix_do_data_sync() {
       'post_name'      => sanitize_title( $meta['title'] ),
       'post_title'     => $meta['title'],
       'post_status'    => 'publish',
-      'post_type'      => 'nettix',
+		  'post_type'      => $post_type,
     );
     // check if this already exists as a post
     $matching = get_posts( array(
-      'post_type' => 'nettix',
+      'post_type' => $post_type,
       'meta_query' => array(
         array(
           'key' => 'nettixID',
@@ -141,7 +174,7 @@ function _wp_nettix_do_data_sync() {
     // This is depreciated.
     // Enter the loop by defining NETTIX_JSON in wp-config
     if ( defined( 'NETTIX_JSON' ) ) {
-      error_log("Using NETTIX_JSON in wp-config is depreciated and will be removed in the near future.")
+      error_log("Using NETTIX_JSON in wp-config is depreciated and will be removed in the near future.");
       foreach ( $meta as $key => $value ) {
         if ( is_array( $value ) ) {
           $value = wp_json_encode( $value );
@@ -154,49 +187,65 @@ function _wp_nettix_do_data_sync() {
       //this is not the best solution though
 
       $meta_keys = array(
-      'make' => 'Valmistaja',
-      'location' => 'Sijainti',
-      'driveType' => 'Vetotapa',
-      'gearBoxType' => 'Vaihteisto',
-      'fuelType' => 'Moottori',
-      'isVatDeductible' => 'ALV',
-      //'Kunnossapitosopimus',
-      'price' => 'Hinta',
-      'year' => 'Vuosimalli',
-      'mileage' => 'Mittarilukema',
-      'color' => 'Väri',
-      'lengthMeter' => 'Pituus',
-      'widthMeter' => 'Leveys',
-      'heightMeter' => 'Korkeus',
-      'totalOwner' => 'Omistajat',
-      'accessory' => 'Lisävarusteet',
-      'engineInfo' => 'Moottorin tiedot',
+		  'make'            => 'Valmistaja',
+		  'location'        => 'Sijainti',
+		  'driveType'       => 'Vetotapa',
+		  'gearBoxType'     => 'Vaihteisto',
+		  'fuelType'        => 'Moottori',
+		  'isVatDeductible' => 'ALV',
+		  'price'           => 'Hinta',
+		  'year'            => 'Vuosimalli',
+		  'mileage'         => 'Mittarilukema',
+		  'color'           => 'Väri',
+		  'lengthMeter'     => 'Pituus',
+		  'widthMeter'      => 'Leveys',
+		  'heightMeter'     => 'Korkeus',
+		  'totalOwner'      => 'Omistajat',
+		  'accessory'       => 'Lisävarusteet',
+		  'engineInfo'      => 'Moottorin tiedot',
       );
 
-      foreach( $meta_keys as $key => $entry ){
-        if($key == 'location'){
+      if ( $post_type == 'nettixvene' ) {
+        $boat_meta_keys = array(
+          'make'          => 'Venevalmistaja',
+          'location'      => 'Venesijainti',
+          'boatFuelType'  => 'Polttoainetyyppi',
+          'boatType'      => 'Venetyyppi',
+          'bodyMaterial'  => 'Runkomateriaali',
+          'draughtMeter'  => 'Syveys',
+          'sailInfo'      => 'Purjeen tiedot',
+        );
+        $meta_keys = array_merge( $meta_keys, $boat_meta_keys );
+      }
+
+      foreach ( $meta_keys as $key => $entry ) {
+        if ( $key == 'location' ) {
           update_post_meta($post_id, $entry, sanitize_text_field($meta['locationInfo']['town']) );
-        }
-
-        elseif( $meta[$key] == false ){
-          update_post_meta( $post_id, $entry, sanitize_text_field('Ei määritelty') );
-        }
-
-        else{
+        } elseif ( $meta[$key] == false ) {
+          update_post_meta( $post_id, $entry, '');
+        } elseif ( $key == 'boatFuelType' ) {
+          if ( is_array( $meta['engineInfo']['engineFuelType'] ) ) {
+            update_post_meta( $post_id, $entry, sanitize_text_field( $meta['engineInfo']['engineFuelType'][0] ) );
+          } else {
+            update_post_meta( $post_id, $entry, sanitize_text_field( $meta['engineInfo']['engineFuelType'] ) );
+          }
+        } elseif ( is_array( $meta[ $key ] ) ) {
+          update_post_meta( $post_id, $entry, $meta[$key] );
+        } else {
           update_post_meta( $post_id, $entry, sanitize_text_field($meta[$key]) );
         }
       }
 
       update_post_meta($post_id, 'nettixID', sanitize_text_field($meta['nettixID']) );
 
-      $meta = wp_slash(json_encode($meta));
+      $meta = wp_slash(wp_json_encode($meta));
       update_post_meta($post_id, 'xml', $meta );
     }
   }
   // find posts to eliminate
   $eliminate = get_posts( array(
     'posts_per_page' => -1,
-    'post_type' => 'nettix',
+    'post_type' => ['nettix', 'nettixvene'],
     'meta_query' => array(
       array(
         'key' => 'nettixID',
