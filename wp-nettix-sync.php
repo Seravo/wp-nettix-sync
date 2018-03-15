@@ -22,6 +22,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
+
+/**
+ * Require options.php for options page
+ */
+require_once dirname( __FILE__ ) .'/options.php' ;
+
 /**
  * Create a custom post type for NettiX items
  */
@@ -88,7 +94,6 @@ function _wp_nettix_register_cpt() {
   );
 }
 
-
 /**
  * Schedule the sync action to be done hourly via WP-Cron
  */
@@ -132,6 +137,17 @@ function _wp_nettix_do_data_sync() {
   $added = array();
   $updated = array();
   $deleted = array();
+
+  // Define the storing method before the loop.
+  $nettix_json = _wp_nettix_get_option( 'wp_nettix_json' );
+  if ( defined( 'NETTIX_JSON' ) && ! empty($nettix_json) ){
+    _wp_nettix_from_config_to_db( 'wp_nettix_json', "1" );
+    $nettix_json = "1";
+  }
+  if ( $nettix_json ){
+    error_log( "wp-nettix-sync Notice: Using Nettix JSON is depreciated and will be removed in the near future." );
+  }
+
   // store the data into wordpress posts
   foreach($links as $count => $link) {
 
@@ -171,17 +187,18 @@ function _wp_nettix_do_data_sync() {
     $post_id = wp_insert_post( $post );
     // add submission data as meta values
 
+
     // This is depreciated.
     // Enter the loop by defining NETTIX_JSON in wp-config
-    if ( defined( 'NETTIX_JSON' ) ) {
-      error_log("Using NETTIX_JSON in wp-config is depreciated and will be removed in the near future.");
+    if ( $nettix_json ) {
       foreach ( $meta as $key => $value ) {
         if ( is_array( $value ) ) {
           $value = wp_json_encode( $value );
         }
         update_post_meta( $post_id, trim( $key ), sanitize_text_field( $value ) );
       }
-    } else {
+    }
+    else {
 
       //search doesn't work w/o some meta fields
       //this is not the best solution though
@@ -339,28 +356,66 @@ function _wp_nettix_parse_links($directory) {
 }
 function _wp_nettix_get_links(){
 
- /* Set NETTIX_DEALERLIST or NETTIX_ADLIST in wp-config
-  * Examples:
-  * define(NETTIX_DEALERLIST, 'https://www.nettiauto.com/datapipe/xml/v3/getdealerlist/00');
-  * or
-  * define('NETTIX_ADLIST', serialize(['https://www.nettiauto.com/datapipe/xml/v2/getadlist/00/000000', 'https://www.nettivene.com/datapipe/xml/v2/getadlist/00/000000']));
-  */
+  $nettix_dealerlist = _wp_nettix_get_option( 'wp_nettix_dealerlist' );
+  $nettix_adlist = _wp_nettix_get_option( 'wp_nettix_adlist' );
 
-  if( defined('NETTIX_DEALERLIST') ) {
+  if( ! empty( $nettix_dealerlist ) ) {
 
-    $nettix_url = NETTIX_DEALERLIST; //set in wp-config
-    $xml = simplexml_load_file($nettix_url);
+    $xml = simplexml_load_file( $nettix_dealerlist );
     $items = array();
 
     foreach( $xml->children() as $child){
       $items[] = (string)$child->adListUrl;
     }
   }
-  else if( defined('NETTIX_ADLIST') ) {
+  else if ( defined('NETTIX_DEALERLIST') ) {
+
+    _wp_nettix_from_config_to_db( 'wp_nettix_dealerlist', NETTIX_DEALERLIST );
+    $xml = simplexml_load_file( NETTIX_DEALERLIST );
+    $items = array();
+
+    foreach( $xml->children() as $child){
+      $items[] = (string)$child->adListUrl;
+    }
+  }
+  else if( ! empty( $nettix_adlist && $nettix_adlist != [""] ) ) {
+    return $nettix_adlist;
+  }
+  else if ( defined('NETTIX_ADLIST') ) {
+    _wp_nettix_from_config_to_db( 'wp_nettix_adlist', unserialize( NETTIX_ADLIST ) );
     return unserialize( NETTIX_ADLIST );
   }
+  else {
+    error_log( 'wp-nettix-sync Error: Datapipe URL not defined. Set it in wp-admin Settings->NettiX' );
+  }
+
   return $items;
 }
+
+function _wp_nettix_from_config_to_db( $optionname, $content ) {
+  if ( is_array($content) ) {
+    update_option( $optionname, implode( ',', $content ) );
+  }
+  else {
+    update_option( $optionname, $content );
+  }
+}
+
+function _wp_nettix_get_option( $option ) {
+  $db_option = get_option( $option );
+
+  if ( $option === 'wp_nettix_adlist') {
+    // Remove spaces and make an array
+    $db_option = str_replace( ' ', '', $db_option );
+    $db_option = explode( ',', $db_option);
+  } elseif ( $option == 'wp_nettix_json' ) {
+    if ( $db_option !== "1" ){
+      $db_option = false;
+    }
+  }
+  return $db_option;
+}
+
 function xmlToArray($xml, $options = array()) {
     $defaults = array(
         'namespaceSeparator' => ':',//you may want this to be something other than a colon
