@@ -267,18 +267,22 @@ function _wp_nettix_do_data_sync() {
       update_post_meta($post_id, 'xml', $meta );
     }
   }
-  // find posts to eliminate
-  $eliminate = get_posts( array(
-    'posts_per_page' => -1,
-    'post_type' => ['nettix', 'nettixvene'],
-    'meta_query' => array(
-      array(
-        'key' => 'nettixID',
-        'compare' => 'NOT IN',
-        'value' => $available,
+  // Eliminate only if there were some links to begin with
+  // For example removing a link from settings would erase everything
+  if ( $nettix_sources ) {
+    // find posts to eliminate
+    $eliminate = get_posts( array(
+      'posts_per_page' => -1,
+      'post_type' => ['nettix', 'nettixvene'],
+      'meta_query' => array(
+        array(
+          'key' => 'nettixID',
+          'compare' => 'NOT IN',
+          'value' => $available,
+        )
       )
-    )
-  ));
+    ));
+  }
   // eliminate them
   foreach($eliminate as $post) {
     wp_delete_post($post->ID, true);
