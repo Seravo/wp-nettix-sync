@@ -97,11 +97,19 @@ function _wp_nettix_register_cpt() {
 /**
  * Schedule the sync action to be done hourly via WP-Cron
  */
-add_action( 'wp', '_wp_nettix_setup_schedule' );
+register_activation_hook( __FILE__, '_wp_nettix_setup_schedule' );
 function _wp_nettix_setup_schedule() {
   if ( ! wp_next_scheduled( 'wp_nettix_sync_data' ) ) {
     wp_schedule_event( time(), 'hourly', 'wp_nettix_sync_data');
   }
+}
+/**
+ * Clear schedules on deactivation
+ */
+register_deactivation_hook(__FILE__, '_wp_nettix_clear_schedule');
+
+function _wp_nettix_clear_schedule() {
+	wp_clear_scheduled_hook('wp_nettix_sync_data');
 }
 /**
  * Fetches data from NettiX
