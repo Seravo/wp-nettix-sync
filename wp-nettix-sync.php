@@ -1,15 +1,15 @@
 <?php
 /**
  * Plugin Name: WP NettiX Sync
- * Plugin URI: https://seravo.com
- * Description: This plugin syncs NettiX items to WordPress as posts with custom fields
+ * Plugin URI: https://github.com/Seravo/wp-nettix-sync
+ * Description: Automatically import NettiX items to WordPress as posts with custom fields.
  * Version: 2.0
  * Author: Seravo Oy
  * Author URI: https://seravo.com
- * License: GPLv3
+ * License: GPLv3 or later
 */
 /**
- * Copyright 2018 Antti Kuosmanen, Petri Salminen / Seravo Oy
+ * Copyright 2015–2018 Seravo Oy
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License, version 3, as
  * published by the Free Software Foundation.
