@@ -30,8 +30,8 @@ require_once dirname( __FILE__ ) .'/options.php' ;
 /**
  * Create a custom post type for NettiX items
  */
-add_action( 'init', '_wp_nettix_register_cpt' );
-function _wp_nettix_register_cpt() {
+add_action( 'init', 'nettix_register_cpt' );
+function nettix_register_cpt() {
   register_post_type( 'nettix',
     array(
       'labels' => array(
@@ -96,8 +96,8 @@ function _wp_nettix_register_cpt() {
 /**
  * Schedule the sync action to be done hourly via WP-Cron
  */
-register_activation_hook( __FILE__, '_wp_nettix_setup_schedule' );
-function _wp_nettix_setup_schedule() {
+register_activation_hook( __FILE__, 'nettix_setup_schedule' );
+function nettix_setup_schedule() {
   if ( ! wp_next_scheduled( 'wp_nettix_sync_data' ) ) {
     wp_schedule_event( time(), 'hourly', 'wp_nettix_sync_data');
   }
@@ -105,16 +105,16 @@ function _wp_nettix_setup_schedule() {
 /**
  * Clear schedules on deactivation
  */
-register_deactivation_hook(__FILE__, '_wp_nettix_clear_schedule');
+register_deactivation_hook(__FILE__, 'nettix_clear_schedule');
 
-function _wp_nettix_clear_schedule() {
+function nettix_clear_schedule() {
 	wp_clear_scheduled_hook('wp_nettix_sync_data');
 }
 /**
  * Fetches data from NettiX
  */
-add_action( 'wp_nettix_sync_data', '_wp_nettix_do_data_sync' );
-function _wp_nettix_do_data_sync() {
+add_action( 'wp_nettix_sync_data', 'nettix_do_data_sync' );
+function nettix_do_data_sync() {
   // start debug buffer
   ob_start();
 
@@ -123,7 +123,7 @@ function _wp_nettix_do_data_sync() {
   // this helps with DEBUG
   header('Content-Type: text/html; charset=utf-8');
   global $nettix_sources;
-  $nettix_sources = _wp_nettix_get_links();
+  $nettix_sources = nettix_get_links();
   if( !is_array($nettix_sources) ) {
     $nettix_sources = array();
   }
@@ -132,7 +132,7 @@ function _wp_nettix_do_data_sync() {
   // get item links
   $links = array();
   foreach($nettix_sources as $src) {
-    $links = array_merge( $links, _wp_nettix_parse_links( $src ) );
+    $links = array_merge( $links, nettix_parse_links( $src ) );
   }
 
   // HACK: let's shuffle the order of links in order to avoid missing the same ones every time
@@ -146,9 +146,9 @@ function _wp_nettix_do_data_sync() {
   $deleted = array();
 
   // Define the storing method before the loop.
-  $nettix_json = _wp_nettix_get_option( 'wp_nettix_json' );
+  $nettix_json = nettix_get_option( 'wp_nettix_json' );
   if ( defined( 'NETTIX_JSON' ) && ! empty($nettix_json) ){
-    _wp_nettix_from_config_to_db( 'wp_nettix_json', "1" );
+    nettix_from_config_to_db( 'wp_nettix_json', "1" );
     $nettix_json = "1";
   }
   if ( $nettix_json ){
@@ -161,7 +161,7 @@ function _wp_nettix_do_data_sync() {
     // Check if 'nettiauto' exists in link and assign the post_type accordingly
     $post_type = ( false !== strpos($link, 'nettiauto') ) ? 'nettix' : 'nettixvene';
 
-    $meta = _wp_nettix_parse_meta( $link );
+    $meta = nettix_parse_meta( $link );
 
     if(!$meta) continue; //skip if meta not available
 
@@ -304,7 +304,7 @@ function _wp_nettix_do_data_sync() {
  *
  *
  */
-function _wp_nettix_parse_meta($item) {
+function nettix_parse_meta($item) {
 
   set_time_limit(180);
 
@@ -312,7 +312,7 @@ function _wp_nettix_parse_meta($item) {
 
   if(!$xml) return false; // do nothing if there's a failure
 
-  $meta = xmlToArray($xml);
+  $meta = nettix_xmlToArray($xml);
 
   $temp = array();
   $temp = $meta['ad'];
@@ -356,7 +356,7 @@ function _wp_nettix_parse_meta($item) {
 /*
  * Parses item links from a template 7 directory
  */
-function _wp_nettix_parse_links($directory) {
+function nettix_parse_links($directory) {
   $xml = simplexml_load_file($directory);
   $items = array();
 
@@ -365,10 +365,10 @@ function _wp_nettix_parse_links($directory) {
   }
   return $items;
 }
-function _wp_nettix_get_links(){
+function nettix_get_links(){
 
-  $nettix_dealerlist = _wp_nettix_get_option( 'wp_nettix_dealerlist' );
-  $nettix_adlist = _wp_nettix_get_option( 'wp_nettix_adlist' );
+  $nettix_dealerlist = nettix_get_option( 'wp_nettix_dealerlist' );
+  $nettix_adlist = nettix_get_option( 'wp_nettix_adlist' );
 
   if( ! empty( $nettix_dealerlist ) ) {
 
@@ -381,7 +381,7 @@ function _wp_nettix_get_links(){
   }
   else if ( defined('NETTIX_DEALERLIST') ) {
 
-    _wp_nettix_from_config_to_db( 'wp_nettix_dealerlist', NETTIX_DEALERLIST );
+    nettix_from_config_to_db( 'wp_nettix_dealerlist', NETTIX_DEALERLIST );
     $xml = simplexml_load_file( NETTIX_DEALERLIST );
     $items = array();
 
@@ -393,7 +393,7 @@ function _wp_nettix_get_links(){
     return $nettix_adlist;
   }
   else if ( defined('NETTIX_ADLIST') ) {
-    _wp_nettix_from_config_to_db( 'wp_nettix_adlist', unserialize( NETTIX_ADLIST ) );
+    nettix_from_config_to_db( 'wp_nettix_adlist', unserialize( NETTIX_ADLIST ) );
     return unserialize( NETTIX_ADLIST );
   }
   else {
@@ -403,7 +403,7 @@ function _wp_nettix_get_links(){
   return $items;
 }
 
-function _wp_nettix_from_config_to_db( $optionname, $content ) {
+function nettix_from_config_to_db( $optionname, $content ) {
   if ( is_array($content) ) {
     update_option( $optionname, implode( ',', $content ) );
   }
@@ -412,7 +412,7 @@ function _wp_nettix_from_config_to_db( $optionname, $content ) {
   }
 }
 
-function _wp_nettix_get_option( $option ) {
+function nettix_get_option( $option ) {
   $db_option = get_option( $option );
 
   if ( $option === 'wp_nettix_adlist') {
@@ -427,7 +427,7 @@ function _wp_nettix_get_option( $option ) {
   return $db_option;
 }
 
-function xmlToArray($xml, $options = array()) {
+function nettix_xmlToArray($xml, $options = array()) {
     $defaults = array(
         'namespaceSeparator' => ':',//you may want this to be something other than a colon
         'attributePrefix' => '@',   //to distinguish between attributes and nodes with the same name
@@ -461,7 +461,7 @@ function xmlToArray($xml, $options = array()) {
     foreach ($namespaces as $prefix => $namespace) {
         foreach ($xml->children($namespace) as $childXml) {
             //recurse into child nodes
-            $childArray = xmlToArray($childXml, $options);
+            $childArray = nettix_xmlToArray($childXml, $options);
             list($childTagName, $childProperties) = each($childArray);
 
             //replace characters in tag name
@@ -507,5 +507,5 @@ function xmlToArray($xml, $options = array()) {
  * Run sync via GET parameters
  */
 if(isset($_GET['nettix_do_sync'])) {
-  add_action('init', '_wp_nettix_do_data_sync');
+  add_action('init', 'nettix_do_data_sync');
 }
