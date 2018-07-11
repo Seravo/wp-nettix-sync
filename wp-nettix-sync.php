@@ -130,9 +130,18 @@ function nettix_do_data_sync() {
   // wp-config.php:
   /*$nettix_sources = 'http://www.nettiauto.com/yritys/{yrityksen_nimi}?id_template=7'*/
   // get item links
+
+  // Keep track of fetch failures
+  $fetch_failure = false;
+
   $links = array();
   foreach($nettix_sources as $src) {
-    $links = array_merge( $links, nettix_parse_links( $src ) );
+    $linklist = nettix_parse_links( $src );
+
+    // Ignore empty lists
+    if ( $linklist[0] != "" ){
+      $links = array_merge( $links, $linklist );
+    }
   }
 
   // HACK: let's shuffle the order of links in order to avoid missing the same ones every time
@@ -163,7 +172,12 @@ function nettix_do_data_sync() {
 
     $meta = nettix_parse_meta( $link );
 
-    if(!$meta) continue; //skip if meta not available
+     //skip if meta not available
+    if (!$meta) {
+      $fetch_failure = true;
+      echo "NETTIXdebug: Failure detected. Not deleting anything.";
+      continue;
+    }
 
     // make this available
     $available[] = $meta['nettixID'];
@@ -268,7 +282,7 @@ function nettix_do_data_sync() {
   }
   // Eliminate only if there were some links to begin with
   // For example removing a link from settings would erase everything
-  if ( $nettix_sources ) {
+  if ( $nettix_sources && ! $fetch_failure ) {
     // find posts to eliminate
     $eliminate = get_posts( array(
       'posts_per_page' => -1,
