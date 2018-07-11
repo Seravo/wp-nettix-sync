@@ -163,6 +163,8 @@ function nettix_do_data_sync() {
   if ( $nettix_json ){
     error_log( "wp-nettix-sync Notice: Using Nettix JSON is depreciated and will be removed in the near future." );
   }
+  
+  $added_titles = [];
 
   // store the data into wordpress posts
   foreach($links as $count => $link) {
@@ -203,6 +205,7 @@ function nettix_do_data_sync() {
       $updated[] = $post['ID'] = $matching[0]->ID;
     }
     else {
+	  $added_titles[] = $post->post_title;
       $added[] = $post_id;
     }
     $post_id = wp_insert_post( $post );
@@ -296,8 +299,10 @@ function nettix_do_data_sync() {
       )
     ));
   }
+  $eliminated_titles = [];
   // eliminate them
   foreach($eliminate as $post) {
+	$eliminated_titles[] = $post->post_title;
     wp_delete_post($post->ID, true);
     $deleted[] = $post->ID;
   }
@@ -307,6 +312,11 @@ function nettix_do_data_sync() {
   print_r($updated);
   echo "Deleted: ";
   print_r($deleted);
+
+  error_log("NETTIXdebug: added " . sizeof($added) . ", updated: " . sizeof($updated) . ", deleted: " . sizeof($deleted));
+  error_log("Added: " . var_dump($added_titles));
+  error_log("Deleted: " . var_dump($eliminated_titles));
+
   $output = ob_get_clean();
   if(isset($_GET['nettix_do_sync'])) {
     print_r('<pre>' . $output . '</pre>');
