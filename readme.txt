@@ -21,6 +21,9 @@ WP NettiX Sync automatically imports data from NettiX sites like nettiauto.fi an
 
 == Changelog ==
 
+= 2.1 =
+* Add deprecation notice as NettiX has shut down their API. This plugin cannot be used anymore.
+
 = 2.0 =
 * Release plugin as production quality and submit to WordPress.org
 * Tidy up the codebase
