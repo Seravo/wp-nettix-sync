@@ -23,6 +23,9 @@ This plugin is currently not used by any customer's of Seravo and there are no p
 
 == Changelog ==
 
+= 2.2 =
+* Re-release plugin as it may work still until August 2020.
+
 = 2.1 =
 * Add deprecation notice as NettiX has shut down their API. This plugin cannot be used anymore.
 
