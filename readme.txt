@@ -13,7 +13,9 @@ WP NettiX Sync automatically imports data from NettiX sites like nettiauto.fi an
 
 == Description ==
 
-**DEPRECATION NOTICE:** NettiX Oy has shut down their API which this plugin was using. Therefore this plugin no longer works. This plugin is currently not used by any customer's of Seravo and there are no plans to rewrite the whole plugin for any alternative APIs (which might not even exist).
+**DEPRECATION NOTICE:** NettiX Oy has shut down their API which this plugin was using. Therefore this plugin will stop working in August 2020.
+
+This plugin is currently not used by any customer's of Seravo and there are no plans to rewrite the whole plugin for any alternative APIs (which might not even exist).
 
 **If you are using this plugin, please uninstall it.**
 
