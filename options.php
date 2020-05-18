@@ -27,7 +27,7 @@ function nettix_init_settings() {
 }
 
 function nettix_options_page() {
-  ?>
+?>
   <div class="wrap">
     <h1>NettiX options</h1>
     <form method="post" action="options.php">
@@ -54,7 +54,7 @@ function nettix_dealerlist_string() {
 }
 
 function nettix_misc_string() {
-  echo '<p>Nettix JSON setting is depreciated. Future releases will not tested with the JSON-format in any way.</p>';
+  echo '<p>Nettix JSON setting is deprecated. Future releases will not tested with the JSON-format in any way.</p>';
 }
 
 function nettix_json_string() {

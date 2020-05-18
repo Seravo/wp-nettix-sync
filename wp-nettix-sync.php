@@ -3,7 +3,7 @@
  * Plugin Name: WP NettiX Sync
  * Plugin URI: https://github.com/Seravo/wp-nettix-sync
  * Description: Automatically import NettiX items to WordPress as posts with custom fields.
- * Version: 2.2
+ * Version: 2.2.1
  * Author: Seravo Oy
  * Author URI: https://seravo.com
  * License: GPLv3 or later
@@ -102,6 +102,8 @@ function nettix_setup_schedule() {
     wp_schedule_event( time(), 'hourly', 'wp_nettix_sync_data');
   }
 }
+
+
 /**
  * Clear schedules on deactivation
  */
@@ -110,6 +112,7 @@ register_deactivation_hook(__FILE__, 'nettix_clear_schedule');
 function nettix_clear_schedule() {
 	wp_clear_scheduled_hook('wp_nettix_sync_data');
 }
+
 /**
  * Fetches data from NettiX
  */
@@ -161,7 +164,7 @@ function nettix_do_data_sync() {
     $nettix_json = "1";
   }
   if ( $nettix_json ){
-    error_log( "wp-nettix-sync Notice: Using Nettix JSON is depreciated and will be removed in the near future." );
+    error_log( "wp-nettix-sync Notice: Using Nettix JSON is deprecated and will be removed in the near future." );
   }
 
   // store the data into wordpress posts
@@ -209,7 +212,7 @@ function nettix_do_data_sync() {
     // add submission data as meta values
 
 
-    // This is depreciated.
+    // This is deprecated.
     // Enter the loop by defining NETTIX_JSON in wp-config
     if ( $nettix_json ) {
       foreach ( $meta as $key => $value ) {
@@ -517,9 +520,19 @@ function nettix_xmlToArray($xml, $options = array()) {
         $xml->getName() => $propertiesArray
     );
 }
+
 /**
  * Run sync via GET parameters
  */
 if(isset($_GET['nettix_do_sync'])) {
   add_action('init', 'nettix_do_data_sync');
 }
+
+function nettix_deprecated() {
+    ?>
+    <div class="notice notice-error">
+      <p>NettiX Oy will shut down the API which the plugin wp-nettix-sync depends on and the plugin will stop working in August 2020 unless a major code rewrite is done. <em>Please contact sales@seravo.com if you want to fund development of the WP NettiX sync plugin.</em></p>
+    </div>
+    <?php
+}
+add_action( 'admin_notices', 'nettix_deprecated' );
